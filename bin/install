@@ -54,7 +54,7 @@ get_binary_path_in_archive() {
 }
 
 get_platform() {
-  echo "$(uname | tr '[:upper:]' '[:lower:]')-amd64"
+  echo "$(uname | tr '[:upper:]' '[:lower:]')_amd64"
 }
 
 get_filename() {
@@ -62,7 +62,7 @@ get_filename() {
   local platform="$2"
   local binary_name="$3"
 
-  echo "${binary_name}.${platform}"
+  echo "${binary_name}_${platform}.zip"
 }
 
 # https://github.com/terraform-linters/tflint/releases/download/v0.14.0/tflint_darwin_amd64.zip
