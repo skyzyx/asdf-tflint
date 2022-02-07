@@ -6,9 +6,9 @@ set \
   -o errexit
 
 # required environment variables
-: ${ASDF_INSTALL_TYPE?}
-: ${ASDF_INSTALL_VERSION?}
-: ${ASDF_INSTALL_PATH?}
+: "${ASDF_INSTALL_TYPE?}"
+: "${ASDF_INSTALL_VERSION?}"
+: "${ASDF_INSTALL_PATH?}"
 
 github_coordinates=terraform-linters/tflint
 
@@ -20,14 +20,16 @@ install_tool() {
   local binary_name=$5
 
   local platform
+  local arch
   local bin_install_path="$install_path/bin"
   local binary_path="$bin_install_path/${binary_name}"
   local download_url
   local download_path
 
+  arch=$(get_arch)
   platform=$(get_platform)
-  download_url=$(get_download_url "$version" "$platform" "$binary_name")
-  download_path="$tmp_download_dir/"$(get_filename "$version" "$platform" "$binary_name")
+  download_url=$(get_download_url "$version" "$platform" "$arch" "$binary_name")
+  download_path="$tmp_download_dir/"$(get_filename "$version" "$platform" "$arch" "$binary_name")
 
   echo "Downloading [${binary_name}] from ${download_url} to ${download_path}"
   curl -sSL -o "$download_path" "$download_url"
@@ -54,15 +56,26 @@ get_binary_path_in_archive() {
 }
 
 get_platform() {
-  echo "$(uname | tr '[:upper:]' '[:lower:]')_amd64"
+  uname | tr '[:upper:]' '[:lower:]'
+}
+
+get_arch() {
+  if [[ "$(uname -m)" == "x86_64" ]]; then
+    echo "amd64"
+  elif [[ "$(uname -m)" == "arm64" ]] || [[ "$(uname -m)" == "aarch64" ]]; then
+    echo "arm64"
+  else
+    echo "386"
+  fi
 }
 
 get_filename() {
   local version="$1"
   local platform="$2"
-  local binary_name="$3"
+  local arch="$3"
+  local binary_name="$4"
 
-  echo "${binary_name}_${platform}.zip"
+  echo "${binary_name}_${platform}_${arch}.zip"
 }
 
 # https://github.com/terraform-linters/tflint/releases/download/v0.14.0/tflint_darwin_amd64.zip
@@ -70,9 +83,10 @@ get_filename() {
 get_download_url() {
   local version="$1"
   local platform="$2"
-  local binary_name="$3"
+  local arch="$3"
+  local binary_name="$4"
   local filename
-  filename="$(get_filename "$version" "$platform" "$binary_name")"
+  filename="$(get_filename "$version" "$platform" "$arch" "$binary_name")"
 
   echo "https://github.com/${github_coordinates}/releases/download/v${version}/${filename}"
 }
